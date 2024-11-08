@@ -9,17 +9,6 @@ spec:
   template:
     spec:
       affinity:
-
-        ## This is a hack to deal with the fact that wrk-5 is having ip address issues
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/hostname
-                operator: NotIn
-                values:
-                - wrk-5
-
         # Spread pods across multiple when possible
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:

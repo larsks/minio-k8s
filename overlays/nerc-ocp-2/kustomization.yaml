@@ -1,0 +1,72 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base
+- issuer
+- internal-certificate.yaml
+
+patches:
+- patch: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      name: minio
+    spec:
+      template:
+        spec:
+          volumes:
+          - name: minio-home
+            emptyDir: {}
+          - name: minio-certificate
+            secret:
+              secretName: minio-internal-certificate
+          initContainers:
+          - name: install-certs
+            image: image-registry.openshift-image-registry.svc:5000/openshift/cli
+            volumeMounts:
+            - name: minio-home
+              mountPath: /minio
+            command:
+            - bash
+            - -c
+            - |
+              mkdir -p /minio/.minio/certs
+              ln -sf /certs/tls.crt /minio/.minio/certs/public.crt
+              ln -sf /certs/tls.key /minio/.minio/certs/private.key
+          containers:
+          - name: minio
+            env:
+            - name: HOME
+              value: /minio
+            volumeMounts:
+            - name: minio-home
+              mountPath: /minio
+            - name: minio-certificate
+              mountPath: /certs
+            args:
+            - server
+            - --console-address
+            - ":8080"
+            - https://minio-{0...3}.minio/data
+            livenessProbe:
+              httpGet:
+                scheme: HTTPS
+- patch: |
+    - op: replace
+      path: /spec/tls/termination
+      value: reencrypt
+    - op: add
+      path: /spec/tls/destinationCACertificate
+      value: |
+        -----BEGIN CERTIFICATE-----
+        MIIBZzCCAQ2gAwIBAgIRANyApaeI0osSkDx/h6bwxTQwCgYIKoZIzj0EAwIwEzER
+        MA8GA1UEAxMIbWluaW8tY2EwHhcNMjQxMTA3MjI0NTUzWhcNMjUwMjA1MjI0NTUz
+        WjATMREwDwYDVQQDEwhtaW5pby1jYTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IA
+        BLbRRmsXBY86fZuqUJbrSjudlTXiNgHoEuvFpO4Cre7o3Rj4o5XwOKZ3vf6PkAGm
+        aWprT8aJiYm6C0AoduK6Q6qjQjBAMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8E
+        BTADAQH/MB0GA1UdDgQWBBRO4bZnag4YH2inUHeGwlVD8w8z8jAKBggqhkjOPQQD
+        AgNIADBFAiEAt1PrlLBPEykCebDk6T5/V0CL6qPnX77xWrHy7YYo6FMCIEnfiiwl
+        IfcBX9sNQFpgN6PaGLmu0y8ZTUs0pdC7/9P0
+        -----END CERTIFICATE-----
+  target:
+    kind: Route
