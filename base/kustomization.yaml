@@ -3,7 +3,13 @@ kind: Kustomization
 commonLabels:
   app: minio
 resources:
-- statefulset.yaml
+- deployment.yaml
+- pvc.yaml
 - service.yaml
 - console-route.yaml
 - object-storage-route.yaml
+
+images:
+  - name: minio
+    newName: quay.io/minio/minio
+    newTag: RELEASE.2024-11-07T00-52-20Z
