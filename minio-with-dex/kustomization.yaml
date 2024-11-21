@@ -1,0 +1,63 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonLabels:
+  app: minio
+resources:
+- ../lib/minio
+- ../lib/dex
+
+configMapGenerator:
+- name: minio-config
+  envs:
+  - minio-config.env
+
+- name: dex-config
+  behavior: replace
+  files:
+  - config.yaml=files/dex-config.yaml
+
+patches:
+- target:
+    kind: Deployment
+    name: minio
+  patch: |
+    # If minio starts up before dex is available, it disables OIDC authentication.
+    - op: add
+      path: /spec/template/spec/initContainers
+      value:
+        - name: wait-for-dex
+          image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+          command:
+          - bash
+          - -c
+          - |
+            echo "waiting for dex..."
+            while ! curl -o /dev/null -sSf http://dex:5556/.well-known/openid-configuration; do
+              sleep 1
+            done
+            echo "it's alive!"
+
+    - op: add
+      path: /spec/template/spec/containers/0/envFrom/-
+      value:
+        secretRef:
+          name: minio-oidc-secret
+
+- patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: dex
+    spec:
+      template:
+        spec:
+          containers:
+          - name: dex
+            env:
+            - name: MINIO_REDIRECT_URI
+              value: https://minio-console-lars-sandbox.apps.shift.nerc.mghpcc.org/oauth_callback
+            - name: DEX_ISSUER_URI
+              value: https://dex-lars-sandbox.apps.shift.nerc.mghpcc.org
+            envFrom:
+            - secretRef:
+                name: minio-oidc-secret

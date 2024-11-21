@@ -1,0 +1,32 @@
+issuer: http://dex/
+
+storage:
+  type: sqlite3
+  config:
+    file: /data/dex.db
+
+web:
+  http: "0.0.0.0:5556"
+
+grpc:
+  addr: "0.0.0.0:5557"
+
+telemetry:
+  http: "0.0.0.0:5558"
+
+oauth2:
+  skipApprovalScreen: true
+
+connectors:
+  - type: openshift
+    id: openshift
+    name: OpenShift
+    config:
+      issuer: https://kubernetes.default.svc
+      clientID: >-
+        system:serviceaccount:{{ getenv "POD_NAMESPACE" }}:dex
+      clientSecret: >-
+        {{ getenv "OPENSHIFT_CLIENT_SECRET" }}
+      redirectURI: "CHANGE ME IN OVERLAY"
+      groups:
+        - system:authenticated

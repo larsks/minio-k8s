@@ -1,6 +1,6 @@
 # Running Minio in OpenShift
 
-Deploys a single-instance minio service.
+Deploys a single-instance minio service with openidc authentication.
 
 Create a secret with your desired admin username and password:
 
@@ -8,8 +8,22 @@ Create a secret with your desired admin username and password:
       --from-literal MINIO_ROOT_USERNAME=alice \
       --from-literal MINIO_ROOT_PASSWORD=secret
 
-Deploy the manifests:
+Create an oidc client secret for minio:
 
-    kubectl apply -k base
+    kubectl create secret generic minio-oidc-secret \
+      --from-literal MINIO_IDENTITY_OPENID_CLIENT_SECRET=secret
 
-This configuration relies on OpenShift to handle TLS termination (which means that in-cluster communication is not encrypted). To have minio handle TLS termination itself, we would need to modify the routes to use a passthrough configuration (set `route.spec.tls.termination` to `passthrough`) and provide minio with a certificate and key.
+Create a kustomize overlay:
+
+    mkdir -p path/to/overlay
+    cd path/to/overlay
+    kustomize create
+    kustomize edit add resource ../../minio-with-dex
+
+Apply the necessary patches to change URLs for your environment:
+
+    ...
+
+Finally, deploy from your overlay:
+
+    kubectl apply -k path/to/overlay
