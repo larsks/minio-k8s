@@ -1,0 +1,26 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: dex
+spec:
+  lookupPolicy:
+    local: true
+  tags:
+  - from:
+      kind: DockerImage
+      name: ghcr.io/dexidp/dex:latest
+    importPolicy:
+      importMode: Legacy
+      scheduled: false
+    name: latest
+    referencePolicy:
+      type: Source
+  - from:
+      kind: DockerImage
+      name: ghcr.io/dexidp/dex:v2.41.1
+    importPolicy:
+      importMode: Legacy
+      scheduled: false
+    name: main
+    referencePolicy:
+      type: Source

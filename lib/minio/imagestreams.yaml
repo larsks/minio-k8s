@@ -1,0 +1,35 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: minio
+spec:
+  lookupPolicy:
+    local: true
+  tags:
+  - from:
+      kind: DockerImage
+      name: quay.io/minio/minio:RELEASE.2024-11-07T00-52-20Z
+    importPolicy:
+      importMode: Legacy
+      scheduled: false
+    name: main
+    referencePolicy:
+      type: Source
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: mc
+spec:
+  lookupPolicy:
+    local: true
+  tags:
+  - from:
+      kind: DockerImage
+      name: quay.io/minio/mc:RELEASE.2024-11-17T19-35-25Z
+    importPolicy:
+      importMode: Legacy
+      scheduled: false
+    name: main
+    referencePolicy:
+      type: Source

@@ -10,13 +10,9 @@ resources:
 - sa.yaml
 - service.yaml
 - pvc.yaml
+- imagestream.yaml
 
 configMapGenerator:
 - name: dex-config
   files:
   - config.yaml=files/dex-config.yaml
-
-images:
-- name: dex
-  newName: ghcr.io/dexidp/dex
-  newTag: v2.41.1

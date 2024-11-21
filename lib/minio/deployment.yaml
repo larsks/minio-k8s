@@ -16,7 +16,7 @@ spec:
         - configMapRef:
             name: minio-config
             optional: true
-        image: minio
+        image: minio:main
         ports:
         - containerPort: 9000
           name: object-storage
