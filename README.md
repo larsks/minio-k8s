@@ -27,3 +27,9 @@ Apply the necessary patches to change URLs for your environment:
 Finally, deploy from your overlay:
 
     kubectl apply -k path/to/overlay
+
+---
+
+A quick way to put the admin password in your paste buffer:
+
+    kubectl get secret minio-admin-credentials -o jsonpath='{.data.MINIO_ROOT_PASSWORD}' | base64 -d | xclip -selection clipboard
